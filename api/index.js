@@ -8,6 +8,9 @@ const api = {
   blocks() {
     return this.i.get('/blocks')
   },
+  block_offset_height(){
+    return this.i.get('/blocks?offset_height')
+  },
   pool() {
     return this.i.get('/pool')
   },

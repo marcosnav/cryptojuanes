@@ -28,7 +28,24 @@ socket.on('open', () => {
 
 socket.on('message', (ev) => {
   const event = JSON.parse(ev)
-  console.log(event)
+  //event.type # ping, subscribe
+  //event.message.type # block_found, new_transaction, etc
+  //event.message.data # { block }, { transaction }, et
+
+  if (event.message == undefined)
+    return;
+
+  switch(event.message.data){
+    case 'new_transaction':{
+      socket.mine.add_transaction(JSON.parse(event.message.data))
+      break;
+    }
+    case '':{
+
+    }
+  }
 })
+
+
 
 module.exports = socket
