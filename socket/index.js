@@ -31,7 +31,6 @@ socket.on('message', (ev) => {
   //event.type # ping, subscribe
   //event.message.type # block_found, new_transaction, etc
   //event.message.data # { block }, { transaction }, et
-
   if (event.message == undefined)
     return;
 
@@ -40,8 +39,13 @@ socket.on('message', (ev) => {
       socket.mine.add_transaction(JSON.parse(event.message.data))
       break;
     }
-    case '':{
-
+    case 'block_found':{
+      socket.mine.initialize();
+      break;
+    }
+    case 'target_changed':{
+      socket.mine.target_changed(event.message.data.new_target);
+      break;
     }
   }
 })

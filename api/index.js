@@ -20,6 +20,9 @@ const api = {
   postBlock(payload) {
     return this.i.post('/block_found', payload)
   },
+  getTarget(){
+    return this.i.get('/target');
+  }
 }
 
 module.exports = api

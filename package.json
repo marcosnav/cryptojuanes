@@ -10,9 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.17.1",
+    "bufferpack": "0.0.6",
     "dotenv": "^4.0.0",
     "lodash": "^4.17.4",
     "merkle": "^0.6.0",
+    "sha256": "^0.2.0",
     "uuid": "^3.1.0",
     "ws": "^3.3.2"
   }
