@@ -79,7 +79,7 @@ Mine.prototype.build_block = function () {
   let network_reward = this.calculate_reward_network()
   let reward = network_reward + transaction_fees;
 
-  let coin_base_transaction = this.generate_coinbase_transaction(network_reward);
+  let coin_base_transaction = this.generate_coinbase_transaction(reward);
   this.pool_transactions.push(coin_base_transaction);
 
   this.merkle_hash = this.generate_merkle_hash(this.pool_transactions);
@@ -114,7 +114,7 @@ Mine.prototype.build_block = function () {
     console.log(payload.hash)
     api.postBlock(payload).then((response) => {
       console.log('Success ...')
-      this.initialize();
+      // this.initialize();
     }).catch((err) => {
       console.log(err.response.data);
       this.initialize();
