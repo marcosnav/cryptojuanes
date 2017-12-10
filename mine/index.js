@@ -85,11 +85,11 @@ Mine.prototype.build_block = function () {
   this.merkle_hash = this.generate_merkle_hash(this.pool_transactions);
 
 
-  let stamp = uuid()
+  let stamp = uuid().split('-')[0]
   //let message = "1|" + this.prev_block.hash + "|" + coin_base_transaction.hash + "|" + this.prev_block.target + "|" + stamp
   let message = "1|" + this.prev_block.hash + "|" + this.merkle_hash + "|" + this.prev_block.target + "|" + stamp
 
-  var go_process = spawn('./bin/powHash', ['500000000', message, this.prev_block.target]);
+  var go_process = spawn('./bin/powHash', ['150000000', message, this.prev_block.target]);
 
   go_process.stdout.on('data', (data) => {
     let hash_block = data.toString().split('|')[0];
