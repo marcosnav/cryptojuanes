@@ -141,13 +141,12 @@ Mine.prototype.calculate_reward_network = function () {
   let result = this.height / 90;
   let floor = Math.floor(result);
 
-
   if (floor < 1) {
     console.log(this.reward_network)
     return this.reward_network;
   }
   let div = Math.pow(2, floor);
-  this.reward_network = this.reward_network / div;
+  return this.reward_network / div;
   return this.reward_network;
 };
 
@@ -194,7 +193,8 @@ Mine.prototype.calculate_fee = function (origin_transaction) {
 Mine.prototype.generate_coinbase_transaction = function (reward) {
 
   let prev_hash = "0000000000000000000000000000000000000000000000000000000000000000";
-  let script_sig = "0123456789bbbcdef";
+  let script_sig = toHex(uuid());
+  // let script_sig = "0123456789abcdef";
   let vout = "-1";
 
   let input_payload = Buffer.concat([
