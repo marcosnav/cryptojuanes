@@ -40,7 +40,8 @@ socket.on('message', (ev) => {
       break;
     }
     case 'block_found':{
-      socket.mine.initialize();
+      socket.mine.height += 1;
+      socket.mine.initialize(event.message.data);
       break;
     }
     case 'target_changed':{

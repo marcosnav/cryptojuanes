@@ -89,7 +89,7 @@ Mine.prototype.build_block = function () {
   //let message = "1|" + this.prev_block.hash + "|" + coin_base_transaction.hash + "|" + this.prev_block.target + "|" + stamp
   let message = "1|" + this.prev_block.hash + "|" + this.merkle_hash + "|" + this.prev_block.target + "|" + stamp
 
-  var go_process = spawn('./bin/powHash', ['1', message, this.prev_block.target]);
+  var go_process = spawn('./bin/powHash', ['500000000', message, this.prev_block.target]);
 
   go_process.stdout.on('data', (data) => {
     let hash_block = data.toString().split('|')[0];
@@ -133,13 +133,26 @@ Mine.prototype.calculate_reward_network = function () {
   return parseInt(this.reward_network / div);
 };
 
-Mine.prototype.initialize = function () {
+Mine.prototype.initialize = function (block) {
 
   // TODO: stop go process.
   this.pool_transactions = [];
   api.pool().then((response) => {
 
     let pool_transactions = response.data;
+
+    if (block) {
+      this.prev_block = block;
+      pool_transactions.forEach((transaction) => {
+        let container = this.calculate_fee(transaction);
+        if (container.isValid) {
+          this.pool_transactions.push(container.transaction);
+        }
+      });
+      this.build_block();
+      return;
+    }
+
     api.block_offset_height().then((response) => {
       this.blocks = response.data;
       let size_blocks = this.blocks.length;
