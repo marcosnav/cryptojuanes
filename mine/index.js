@@ -51,49 +51,96 @@ Mine.prototype.generate_merkle_hash = function (pool_transactions) {
 
   console.log(hashes)
 
-  const tree_parse = (hashes) => {
-    let temp_tree = [];
-
-    for (let i = 0; i < hashes.length; i += 1) {
-      if ((i + 1) % 2 === 0) continue
-
-      const ha = hashes[i]
-      let hb = hashes[i + 1]
-
-      if (!hb) hb = ha
-
-      let hash_concat = Buffer.concat([
-        new Buffer(ha),
-        new Buffer(hb)
-      ])
-
-      let node_hash = sha256.x2(hash_concat)
-      temp_tree.push(node_hash);
+  const getMerkleRoot = (transactions) => {
+    let arr = transactions;
+    if(arr.length == 1) return arr[0];
+    while(arr.length > 1){
+      new_arr = []
+      if (arr.length % 2 !== 0) {
+        arr.push(arr[arr.length - 1]);
+      }
+      while(arr.length > 0){
+        new_arr.push(sha256.x2(Buffer.concat([Buffer.from(arr.shift(), 'hex'), Buffer.from(arr.shift(), 'hex')]).toString('hex')))
+      }
+      arr = new_arr;
     }
-
-    if (temp_tree.length === 1)
-      return temp_tree[0]
-
-    return tree_parse(temp_tree)
+    return arr[0];
   }
 
-  return tree_parse(hashes);
+  return getMerkleRoot(hashes)
+
+  // let node_hash
+  // let temp_tree = [];
+
+
+
+  // while (hashes.length > 0) {
+  //   const ha = hashes.pop()
+  //   let hb = hashes.pop()
+
+  //   if (!hb) hb = ha
+
+  //   let hash_concat = new Buffer.concat([
+  //     new Buffer(ha),
+  //     new Buffer(hb)
+  //   ])
+
+  //   node_hash = sha256.x2(hash_concat)
+  //   temp_tree.push(node_hash)
+  // }
+
+  // return node_hash
+
+  // const tree_parse = (hashes) => {
+  //   let temp_tree = [];
+
+  //   for (let i = 0; i < hashes.length; i += 1) {
+  //     // if ((i + 1) % 2 === 0) continue
+
+
+  //     const ha = hashes[i]
+  //     let hb = hashes[i + 1]
+
+  //     if (!hb) hb = ha
+
+  //     let hash_concat = new Buffer.concat([
+  //       new Buffer(ha),
+  //       new Buffer(hb)
+  //     ])
+
+  //     let node_hash = sha256.x2(hash_concat)
+  //     temp_tree.push(node_hash);
+  //   }
+
+  //   console.log(temp_tree)
+
+  //   if (temp_tree.length === 1)
+  //     return temp_tree[0]
+
+  //   return tree_parse(temp_tree)
+  // }
+
+  // return tree_parse(hashes)
 };
 
 Mine.prototype.build_block = function () {
+  if (!this.pool_transactions)
+    return
+
   let transaction_fees = _.sumBy(this.pool_transactions, (item) => {
     return item.fee;
   });
+
+  this.merkle_hash = this.generate_merkle_hash(this.pool_transactions);
 
   let network_reward = this.calculate_reward_network()
   let reward = network_reward + transaction_fees;
 
   let coin_base_transaction = this.generate_coinbase_transaction(network_reward);
 
-  this.merkle_hash = this.generate_merkle_hash(this.pool_transactions);
   let stamp = uuid()
-  // let message = "1|" + this.prev_block.hash + "|" + coin_base_transaction.hash + "|" + this.prev_block.target + "|" + stamp
-  let message = "1|" + this.prev_block.hash + "|" + this.merkle_hash + "|" + this.prev_block.target + "|" + stamp
+  let message = "1|" + this.prev_block.hash + "|" + coin_base_transaction.hash + "|" + this.prev_block.target + "|" + stamp
+  // let message = "1|" + this.prev_block.hash + "|" + this.merkle_hash + "|" + this.prev_block.target + "|" + stamp
 
   var go_process = spawn('./bin/powHash', ['0', message, this.prev_block.target]);
 
@@ -101,9 +148,7 @@ Mine.prototype.build_block = function () {
     let hash_block = data.toString().split('|')[0];
     let nonce = data.toString().split('|')[1];
 
-
     console.log("GO: ", data.toString())
-
 
     this.pool_transactions.push(coin_base_transaction);
 
@@ -114,10 +159,10 @@ Mine.prototype.build_block = function () {
       hash: hash_block,
       height: this.prev_block.height + 1,
       message: stamp,
-      // merkle_root: coin_base_transaction.hash,
-      merkle_root: this.merkle_hash,
-      // transactions: [coin_base_transaction],
-      transactions: this.pool_transactions,
+      merkle_root: coin_base_transaction.hash,
+      // merkle_root: this.merkle_hash,
+      transactions: [coin_base_transaction],
+      // transactions: this.pool_transactions,
       reward: reward,	//amount	Total reward of the block (network reward + transaction fees)
       nonce: nonce,
       nickname: 'cryptojuanes',
@@ -131,13 +176,10 @@ Mine.prototype.build_block = function () {
       console.log(err.response.data);
       this.initialize();
     })
-
   });
-
 };
 
 Mine.prototype.calculate_reward_network = function () {
-
   let result = this.height / 90;
   let floor = Math.floor(result);
 
@@ -164,8 +206,8 @@ Mine.prototype.initialize = function () {
       this.height = this.prev_block.height;
 
       pool_transactions.forEach((transaction) => {
-        if (this.pool_transactions.length == 20)
-          return
+        // if (this.pool_transactions.length == 3)
+        //   return
         let container = this.calculate_fee(transaction);
         if (container.isValid) {
           this.pool_transactions.push(container.transaction);

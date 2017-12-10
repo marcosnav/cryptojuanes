@@ -103,4 +103,35 @@ let mine = new Mine();
 
 mine.initialize()
 
+// let trans = [ '677dc883b6fc7fd49670d1c90b0dcca8e7cd76ea1333a66882e5204d6c2b439d',
+//   'e3e04c3450cb60764bd8175920ee0d287e3548ceeffb3485f0018343eb246fe5',
+//   '618e693775671aec75df06ddf89442da82a995de4aacedccd3e21f750a8b25e7',
+//   '31823721e51031fce666ae38eb8f98da2a3afd720ab0f81b119a70c83ebe18b7',
+//   'd1e6bb4f1af6deb7b208178ae3666b3938ced5867623e93bee1528c6316c57e4',
+//   'f096ac95896c14312196bd9dbaa31ed4938be98790eee9ea72bfef1b006c94f0',
+//   'bd2c86fbd9623b8aa6007c047906697743ccd5b373d788efc52750adaeedf1bd',
+//   'abbb5d5894dcff5c456143236cfbd11e72f2dd0675967b8d2db97820ee347f10',
+//   '829311ac376aeade0b2847c7fcc5a1a71a9a441fbc6ff63788498ddc5708f40d',
+//   '64afd207d18762c7683b40eb80a10b4277adfd80c1300844e87ba66d7d929da7',
+//   'e4c3cca94a101d394f8687de7a123eaa1c309ee84024b20479fe6c873919bb1a' ];
+
+// let trans = [
+//  "4c714086e821264e94a5412f8043e5c6041b67ec99bd7dca66dac67bc11ceaa8",
+//  "f0bc70e6e0d168efbe10f2179ab22f9810fbe8dfad7ea69d3c638c9b9194a631",
+//  "b3c212a29c16081301b7e95edef583bb8ec8c3302f66673b411638f993a00cb1"
+// ];
+
+// var bla = mine.generate_merkle_hash(trans)
+
+// console.log(trans)
+
+// console.log(bla)
+
+// console.log('9a0025d5714a1d2e262cf6ec62babb6406ae9acebf80f799f3d96c88802a76b1')
+
+// const tr = [ '38e11306e05702346141138dd5a8c3224181f408aa9e69703953c91d3dfe35e9' ]
+// const bla = mine.generate_merkle_hash(tr)
+
+// console.log(bla)
+
 socket.mine = mine;
