@@ -5,7 +5,7 @@ const merkle = require('merkle');
 const fee_rate = 1;//14000;
 const api = require('../api')
 let reward_network;
-const public_key_compressed = '03caf3bf3ed98a6b0e60dc86d79dcf7dbbcaf8a4fe2fb7453b08c07de3cf0d0643';
+const public_key_compressed = '2bfcc6808f5679ee357590f8ff126ec01cfc061a';
 const public_address = '151asPhV5TDuPMsinMGVDiQQos9N9epBP4'
 const sha256 = require('sha256')
 const { spawn } = require('child_process');
@@ -14,6 +14,12 @@ const child = spawn('pwd');
 
 function Mine() {
   this.reward_network = 50e8;
+}
+
+const get_txn_hashes = (pool_transactions) => {
+  return pool_transactions.map((transaction) => {
+    return transaction.hash;
+  });
 }
 
 Mine.prototype.add_transaction = function (transaction) {
@@ -32,11 +38,35 @@ Mine.prototype.add_transaction = function (transaction) {
 };
 
 Mine.prototype.generate_merkle_hash = function (pool_transactions) {
-  let hashes = pool_transactions.map((transaction) => {
-    return transaction.hash;
-  });
-  let sha256tree = merkle('sha256').sync(hashes);
-  return sha256tree.root();
+  const hashes = get_txn_hashes(pool_transactions)
+
+  const tree_parse = (hashes) => {
+    let temp_tree = [];
+
+    for (let i = 0; i < hashes.length; i += 1) {
+      if ((i + 1) % 2 === 0) continue
+
+      const ha = hashes[i]
+      let hb = hashes[i + 1]
+
+      if (!hb) hb = ha
+
+      let hash_concat = Buffer.concat([
+        new Buffer(ha),
+        new Buffer(hb)
+      ])
+
+      let node_hash = sha256.x2(hash_concat)
+      temp_tree.push(node_hash);
+    }
+
+    if (temp_tree.length === 1)
+      return temp_tree[0]
+
+    return tree_parse(temp_tree)
+  }
+
+  return tree_parse(hashes);
 };
 
 Mine.prototype.build_block = function () {
@@ -157,8 +187,8 @@ Mine.prototype.generate_coinbase_transaction = function (reward) {
   output_payload = Buffer.concat(
     [
       this.text2Binary(value.toString()),
-      this.text2Binary(public_address.length.toString()),
-      this.text2Binary(public_address.toString(), 'hex')
+      this.text2Binary(public_key_compressed.length.toString()),
+      this.text2Binary(public_key_compressed.toString(), 'hex')
     ]
   )
 
@@ -167,9 +197,9 @@ Mine.prototype.generate_coinbase_transaction = function (reward) {
     [
       this.text2Binary("1"),
       this.text2Binary("1"),
-      this.text2Binary(input_payload,'hex'),
+      this.text2Binary(input_payload, "hex"),
       this.text2Binary("1"),
-      this.text2Binary(output_payload,'hex'),
+      this.text2Binary(output_payload, "hex"),
       this.text2Binary("0")
     ]
   )
@@ -205,31 +235,6 @@ Mine.prototype.target_changed = function (new_target) {
   this.prev_block.target = new_target;
   // TODO: stop go process.
   this.build_block();
-};
-
-Mine.prototype.merkle_tree = function(hashes){
-
-  if (hashes.length == 1){
-    return hashes[0];
-  }
-  let merkle_hashes = [];
-  for(i=0; i<= hashes.length; i+=2){
-    let hash_1 = sha256.x2(hashes[i]);
-    let hash_2 = undefined;
-    if ((i+1)==hashes.length){
-      hash_2 = hash_1;
-    }else{
-      hash_2 = sha256.x2(hashes[i+1]);
-    }
-
-    let node_concat = Buffer.concat[
-      new Buffer(hash_1,'hex'),
-      new Buffer(hash_2,'hex')]
-    let node_hash = sha256.x2(node_concat);
-    merkle_hashes.push(node_hash);
-  }
-  this.merkle_hashes(merkle_hashes)
-
 };
 
 module.exports = Mine;
