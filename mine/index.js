@@ -3,7 +3,7 @@ const pryjs = require('pryjs')
 const _ = require('lodash')
 const max_size = 10e5;
 const merkle = require('merkle');
-const fee_rate = 14000;
+const fee_rate = 25000;
 const api = require('../api')
 let reward_network;
 const public_key_compressed = '2bfcc6808f5679ee357590f8ff126ec01cfc061a';
@@ -49,8 +49,6 @@ Mine.prototype.add_transaction = function (transaction) {
 Mine.prototype.generate_merkle_hash = function (pool_transactions) {
   const hashes = get_txn_hashes(pool_transactions)
 
-  console.log(hashes)
-
   const getMerkleRoot = (transactions) => {
     let arr = transactions;
     if(arr.length == 1) return arr[0];
@@ -68,59 +66,6 @@ Mine.prototype.generate_merkle_hash = function (pool_transactions) {
   }
 
   return getMerkleRoot(hashes)
-
-  // let node_hash
-  // let temp_tree = [];
-
-
-
-  // while (hashes.length > 0) {
-  //   const ha = hashes.pop()
-  //   let hb = hashes.pop()
-
-  //   if (!hb) hb = ha
-
-  //   let hash_concat = new Buffer.concat([
-  //     new Buffer(ha),
-  //     new Buffer(hb)
-  //   ])
-
-  //   node_hash = sha256.x2(hash_concat)
-  //   temp_tree.push(node_hash)
-  // }
-
-  // return node_hash
-
-  // const tree_parse = (hashes) => {
-  //   let temp_tree = [];
-
-  //   for (let i = 0; i < hashes.length; i += 1) {
-  //     // if ((i + 1) % 2 === 0) continue
-
-
-  //     const ha = hashes[i]
-  //     let hb = hashes[i + 1]
-
-  //     if (!hb) hb = ha
-
-  //     let hash_concat = new Buffer.concat([
-  //       new Buffer(ha),
-  //       new Buffer(hb)
-  //     ])
-
-  //     let node_hash = sha256.x2(hash_concat)
-  //     temp_tree.push(node_hash);
-  //   }
-
-  //   console.log(temp_tree)
-
-  //   if (temp_tree.length === 1)
-  //     return temp_tree[0]
-
-  //   return tree_parse(temp_tree)
-  // }
-
-  // return tree_parse(hashes)
 };
 
 Mine.prototype.build_block = function () {
@@ -131,44 +76,42 @@ Mine.prototype.build_block = function () {
     return item.fee;
   });
 
-  this.merkle_hash = this.generate_merkle_hash(this.pool_transactions);
-
   let network_reward = this.calculate_reward_network()
   let reward = network_reward + transaction_fees;
 
   let coin_base_transaction = this.generate_coinbase_transaction(network_reward);
+  this.pool_transactions.push(coin_base_transaction);
+
+  this.merkle_hash = this.generate_merkle_hash(this.pool_transactions);
+
 
   let stamp = uuid()
-  let message = "1|" + this.prev_block.hash + "|" + coin_base_transaction.hash + "|" + this.prev_block.target + "|" + stamp
-  // let message = "1|" + this.prev_block.hash + "|" + this.merkle_hash + "|" + this.prev_block.target + "|" + stamp
+  //let message = "1|" + this.prev_block.hash + "|" + coin_base_transaction.hash + "|" + this.prev_block.target + "|" + stamp
+  let message = "1|" + this.prev_block.hash + "|" + this.merkle_hash + "|" + this.prev_block.target + "|" + stamp
 
-  var go_process = spawn('./bin/powHash', ['0', message, this.prev_block.target]);
+  var go_process = spawn('./bin/powHash', ['500000000', message, this.prev_block.target]);
 
   go_process.stdout.on('data', (data) => {
     let hash_block = data.toString().split('|')[0];
     let nonce = data.toString().split('|')[1];
-
-    console.log("GO: ", data.toString())
-
-    this.pool_transactions.push(coin_base_transaction);
-
-    // eval(pryjs.it)
 
     let payload = {
       prev_block_hash: this.prev_block.hash,
       hash: hash_block,
       height: this.prev_block.height + 1,
       message: stamp,
-      merkle_root: coin_base_transaction.hash,
-      // merkle_root: this.merkle_hash,
-      transactions: [coin_base_transaction],
-      // transactions: this.pool_transactions,
+      //merkle_root: coin_base_transaction.hash,
+      merkle_root: this.merkle_hash,
+      //transactions: [coin_base_transaction],
+      transactions: this.pool_transactions,
       reward: reward,	//amount	Total reward of the block (network reward + transaction fees)
       nonce: nonce,
       nickname: 'cryptojuanes',
       used_target: this.prev_block.target,
       created_at: Date.now()
     }
+    console.log('merkle ' + this.merkle_hash)
+    console.log(this.pool_transactions)
     api.postBlock(payload).then((response) => {
       console.log('Success ...')
       this.initialize();
@@ -184,7 +127,6 @@ Mine.prototype.calculate_reward_network = function () {
   let floor = Math.floor(result);
 
   if (floor < 1) {
-    console.log(this.reward_network)
     return this.reward_network;
   }
   let div = Math.pow(2, floor);
@@ -206,8 +148,6 @@ Mine.prototype.initialize = function () {
       this.height = this.prev_block.height;
 
       pool_transactions.forEach((transaction) => {
-        // if (this.pool_transactions.length == 3)
-        //   return
         let container = this.calculate_fee(transaction);
         if (container.isValid) {
           this.pool_transactions.push(container.transaction);
@@ -263,7 +203,7 @@ Mine.prototype.generate_coinbase_transaction = function (reward) {
 
   hash = sha256.x2(transaction).split('').reverse().join('');
 
-  console.log(hash)
+  //console.log(hash)
 
   const transaction_ready = {
     hash: hash,
