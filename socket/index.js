@@ -34,9 +34,9 @@ socket.on('message', (ev) => {
   if (event.message == undefined)
     return;
 
-  switch(event.message.data){
+  switch(event.message.type){
     case 'new_transaction':{
-      socket.mine.add_transaction(JSON.parse(event.message.data))
+      socket.mine.add_transaction(event.message.data)
       break;
     }
     case 'block_found':{
