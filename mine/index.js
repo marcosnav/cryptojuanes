@@ -110,8 +110,8 @@ Mine.prototype.build_block = function () {
       used_target: this.prev_block.target,
       created_at: Date.now()
     }
-    console.log('merkle ' + this.merkle_hash)
-    console.log(this.pool_transactions)
+
+    console.log(payload.hash)
     api.postBlock(payload).then((response) => {
       console.log('Success ...')
       this.initialize();
@@ -130,8 +130,7 @@ Mine.prototype.calculate_reward_network = function () {
     return this.reward_network;
   }
   let div = Math.pow(2, floor);
-  return this.reward_network / div;
-  return this.reward_network;
+  return parseInt(this.reward_network / div);
 };
 
 Mine.prototype.initialize = function () {
